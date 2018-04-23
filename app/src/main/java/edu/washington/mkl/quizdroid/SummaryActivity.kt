@@ -14,22 +14,28 @@ class SummaryActivity : AppCompatActivity() {
 
         val intent = intent
 
-        val tv = findViewById(R.id.textView) as TextView
+        val ql = QuizLibrary();
 
-        Log.i("QuestionActivity", intent.getStringExtra("test"))
 
-        tv.setText(intent.getStringExtra("test"))
+        val quiz = ql.Quizes.get(intent.getStringExtra("QuizName"))
+
 
         val tv_title = findViewById(R.id.textView_title) as TextView
         val tv_description = findViewById(R.id.textView_description) as TextView
-        val btn_start = findViewById(R.id.btn_submit) as Button
+        //val btn_start = findViewById(R.id.btn_submit) as Button
 
+        tv_title.setText(quiz?.title.toString())
+        tv_description.setText(quiz?.description.toString())
+
+
+        val btn_start = findViewById(R.id.button3) as Button
 
         btn_start.setOnClickListener { view ->
 
             val intent = Intent(this, QuestionActivity::class.java)
             startActivity(intent)
         }
+
 
 
     }
