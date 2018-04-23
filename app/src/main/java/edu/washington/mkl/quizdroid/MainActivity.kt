@@ -4,6 +4,12 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.ListView
+import android.widget.Toast
+import android.widget.AdapterView
+import android.util.Log
+import android.content.Intent
+
+
 
 
 class MainActivity : AppCompatActivity() {
@@ -22,5 +28,17 @@ class MainActivity : AppCompatActivity() {
                 android.R.layout.simple_list_item_1, android.R.id.text1, values)
 
         lv.adapter = adapter
+
+
+        lv.onItemClickListener = AdapterView.OnItemClickListener { adapterView, view, position, id ->
+            // do something...
+            Log.i("My Activity", position.toString())
+
+            val intent = Intent(this, SummaryActivity::class.java)
+
+            intent.putExtra("test", position.toString())
+
+            startActivity(intent)
+        }
     }
 }
