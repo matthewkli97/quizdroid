@@ -17,7 +17,7 @@ class SummaryActivity : AppCompatActivity() {
         val ql = QuizLibrary();
 
 
-        val quiz = ql.Quizes.get(intent.getStringExtra("QuizName"))
+        val quiz = ql.Quizes.get(intent.getStringExtra("quiz"))
 
 
         val tv_title = findViewById(R.id.textView_title) as TextView
@@ -32,11 +32,11 @@ class SummaryActivity : AppCompatActivity() {
 
         btn_start.setOnClickListener { view ->
 
-            val intent = Intent(this, QuestionActivity::class.java)
-            startActivity(intent)
+            val nextIntent = Intent(this, QuestionActivity::class.java)
+            nextIntent.putExtra("index", 0)
+            nextIntent.putExtra("quiz", intent.getStringExtra("quiz"))
+            nextIntent.putExtra("correct", 0)
+            startActivity(nextIntent)
         }
-
-
-
     }
 }

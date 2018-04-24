@@ -14,12 +14,9 @@ import android.content.Intent
 
 class MainActivity : AppCompatActivity() {
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
 
         val lv = findViewById(R.id.list) as ListView
 
@@ -37,7 +34,7 @@ class MainActivity : AppCompatActivity() {
 
             val intent = Intent(this, SummaryActivity::class.java)
 
-            intent.putExtra("QuizName", quizes[position])
+            intent.putExtra("quiz", quizes[position])
 
             startActivity(intent)
         }
