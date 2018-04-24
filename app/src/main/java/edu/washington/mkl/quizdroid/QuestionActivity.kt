@@ -3,6 +3,7 @@ package edu.washington.mkl.quizdroid
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import edu.washington.mkl.quizdroid.QuizLibrary
 
@@ -58,6 +59,6 @@ class QuestionActivity : AppCompatActivity() {
 
     fun updateButton() {
         val btn_submit = findViewById(R.id.btn_submit) as Button
-        btn_submit.isEnabled = selected != -1
+        btn_submit.visibility = if(selected != -1) View.VISIBLE else View.INVISIBLE
     }
 }
