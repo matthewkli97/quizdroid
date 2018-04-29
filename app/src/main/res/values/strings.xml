@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">QuizDroid</string>
     <string name="progress_message">You have %d out of %d questions correct!</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

@@ -32,9 +32,9 @@ class MainActivity : AppCompatActivity() {
             // do something...
             Log.i("My Activity", position.toString())
 
-            val intent = Intent(this, SummaryActivity::class.java)
+            val intent = Intent(this, QuizActivity::class.java)
 
-            intent.putExtra("quiz", quizes[position])
+            intent.putExtra("quizName", quizes[position])
 
             startActivity(intent)
         }
