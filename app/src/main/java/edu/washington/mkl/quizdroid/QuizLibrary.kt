@@ -28,8 +28,9 @@ class QuizLibrary () {
     val Quiz3 = Quiz("Marvel", "Math Quiz!", arrayOf(q3_1,q3_2,q3_3));
 
     val Quizes:Map<String, Quiz> = mapOf("Math" to Quiz1, "Physics" to Quiz2, "Marvel" to Quiz3)
+
+    class Question (val question:String, val choices:Array<String>, val answer:String)
+
+    class Quiz (val title:String, val description:String, val questions:Array<Question>)
 }
 
-class Question (val question:String, val choices:Array<String>, val answer:String)
-
-class Quiz (val title:String, val description:String, val questions:Array<Question>)

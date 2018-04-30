@@ -14,7 +14,7 @@ class AnswerActivity : AppCompatActivity() {
 
         val index = intent.getIntExtra("index", 0)
         val ql = QuizLibrary();
-        val quiz = ql.Quizes.get(intent.getStringExtra("quiz"))
+        val quiz:Quiz? = QuizApp.instance.getQuiz(intent.getStringExtra("quiz"))
         val question:Question = quiz!!.questions[index]
 
         val tv_user = findViewById(R.id.textView_userChoice) as TextView
@@ -25,7 +25,7 @@ class AnswerActivity : AppCompatActivity() {
 
         val userSelection = intent.getStringExtra("selected")
 
-        val correct = if (userSelection == question.answer) intent.getIntExtra("correct", 0) + 1 else intent.getIntExtra("correct", 0)
+        val correct = if (userSelection == question.choices[question.answer]) intent.getIntExtra("correct", 0) + 1 else intent.getIntExtra("correct", 0)
 
         tv_title.setText(question.question)
         tv_answer.setText(question.answer)

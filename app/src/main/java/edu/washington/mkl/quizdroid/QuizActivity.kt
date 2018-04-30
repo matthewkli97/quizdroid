@@ -16,8 +16,6 @@ class QuizActivity : AppCompatActivity() , SummaryFragment.OnFragmentInteraction
     var questionFragment:QuestionFragment? = null
     var answerFragment:AnswerFragment? = null
     var currFragment:Fragment? = null
-    val ql = QuizLibrary();
-    val quizes:Array<String> = ql.Quizes.keys.toTypedArray()
     var quiz:Quiz? = null;
     var correct = 0
     var current = 0
@@ -28,8 +26,8 @@ class QuizActivity : AppCompatActivity() , SummaryFragment.OnFragmentInteraction
 
         val intent = intent
         val quizName = intent.getStringExtra("quizName")
-        quiz = ql.Quizes.get(intent.getStringExtra("quizName"))
-        val quizSummary = quiz?.description.toString()
+        quiz = QuizApp.instance.getQuiz(intent.getStringExtra("quizName"))
+        val quizSummary = quiz?.longDesc.toString()
 
         summaryFragment = SummaryFragment.newInstance(intent.getStringExtra("quizName"), quizSummary)
 
@@ -54,12 +52,12 @@ class QuizActivity : AppCompatActivity() , SummaryFragment.OnFragmentInteraction
     }
 
     override fun onQuestionButtonInteraction(selected:Int) {
-        val question = quiz!!.questions[current]
-        if(question.choices[selected] == question.answer) {
+        val question = quiz!!.questions.get(current)
+        if(question.choices[selected] == question.choices[question.answer].toString()) {
             correct++
         }
 
-        answerFragment = AnswerFragment.newInstance(question.question, question.answer, question.choices[selected], correct, quiz!!.questions.size, current + 1 >= quiz!!.questions.size)
+        answerFragment = AnswerFragment.newInstance(question.question, question.choices[question.answer].toString(), question.choices[selected], correct, quiz!!.questions.size, current + 1 >= quiz!!.questions.size)
         val currFrag = supportFragmentManager.findFragmentByTag("QuestionFrag")
 
         supportFragmentManager

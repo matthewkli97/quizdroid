@@ -23,8 +23,7 @@ class QuestionActivity : AppCompatActivity() {
 
         updateButton()
 
-        val ql = QuizLibrary();
-        val quiz = ql.Quizes.get(intent.getStringExtra("quiz"))
+        val quiz = QuizApp.instance.getQuiz(intent.getStringExtra("quiz"))
         val question:Question = quiz!!.questions[intent.getIntExtra("index", 0)]
 
         val rg_answers = RadioGroup(applicationContext)
