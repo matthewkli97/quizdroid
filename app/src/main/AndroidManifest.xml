@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="edu.washington.mkl.quizdroid">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:name=".QuizApp"
         android:allowBackup="true"

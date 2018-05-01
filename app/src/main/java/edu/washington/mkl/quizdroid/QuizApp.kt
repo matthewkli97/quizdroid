@@ -3,7 +3,7 @@ package edu.washington.mkl.quizdroid
 import android.app.Application
 import android.util.Log
 
-class QuizApp : Application(), TopicInterface {
+class QuizApp : Application(), TopicRepository {
 
     companion object {
         lateinit var instance: QuizApp
@@ -19,7 +19,7 @@ class QuizApp : Application(), TopicInterface {
 
         Log.i("QuizApp", "Hit Me")
 
-        val q1_1 = Question("1+1", arrayOf("2","10", "11", "16"), 1)
+        val q1_1 = Question("1+1", arrayOf("2","10", "11", "16"), 0)
         val q1_2 = Question("10/10", arrayOf("1","10", "15", "16"), 0)
         val q1_3 = Question("11 * 22", arrayOf("242","0", "11", "16"), 0)
 
@@ -78,9 +78,10 @@ class QuizApp : Application(), TopicInterface {
 class Question (val question:String, val choices:Array<String>, val answer:Int)
 class Quiz (val title:String, val shortDesc:String, val longDesc:String, val questions:MutableList<Question>)
 
-interface TopicInterface {
+interface TopicRepository {
     fun getQuiz(quizName:String) : Quiz?
     fun getQuestion(quizName:String, index:Int) : Question?
     fun putQuiz(quizName: String, quiz:Quiz)
     fun putQuestion(quizName: String, question:Question)
 }
+
