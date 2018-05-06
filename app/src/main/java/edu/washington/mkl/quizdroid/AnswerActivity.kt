@@ -15,7 +15,7 @@ class AnswerActivity : AppCompatActivity() {
         val index = intent.getIntExtra("index", 0)
         val ql = QuizLibrary();
         val quiz:Quiz? = QuizApp.instance.getQuiz(intent.getStringExtra("quiz"))
-        val question:Question = quiz!!.questions[index]
+        val question:Question = quiz!!.questions!![index]
 
         val tv_user = findViewById(R.id.textView_userChoice) as TextView
         val tv_answer = findViewById(R.id.textView_answer) as TextView
@@ -30,9 +30,9 @@ class AnswerActivity : AppCompatActivity() {
         tv_title.setText(question.question)
         tv_answer.setText(question.answer)
         tv_user.setText(intent.getStringExtra("selected"))
-        tv_progress.setText(getString(R.string.progress_message, correct, quiz.questions.size))
+        tv_progress.setText(getString(R.string.progress_message, correct, quiz.questions!!.size))
 
-        if(index + 1 < quiz.questions.size) {
+        if(index + 1 < quiz.questions!!.size) {
             btn_next.setOnClickListener { view ->
                 val nextIntent = Intent(this, QuestionActivity::class.java)
                 nextIntent.putExtra("index", intent.getIntExtra("index", 0) + 1)

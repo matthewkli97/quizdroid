@@ -2,6 +2,16 @@ package edu.washington.mkl.quizdroid
 
 import android.app.Application
 import android.util.Log
+import java.net.HttpURLConnection
+import java.net.URL
+import android.os.AsyncTask
+import android.os.Environment
+import java.io.*
+import java.net.MalformedURLException
+import android.os.Environment.getExternalStorageDirectory
+import org.json.JSONArray
+import org.json.JSONObject
+
 
 class QuizApp : Application(), TopicRepository {
 
@@ -17,40 +27,71 @@ class QuizApp : Application(), TopicRepository {
 
         instance = this
 
-        Log.i("QuizApp", "Hit Me")
 
-        val q1_1 = Question("1+1", arrayOf("2","10", "11", "16"), 0)
-        val q1_2 = Question("10/10", arrayOf("1","10", "15", "16"), 0)
-        val q1_3 = Question("11 * 22", arrayOf("242","0", "11", "16"), 0)
+        val sdcard = Environment.getExternalStorageDirectory()
 
-        val q2_1 = Question("Which of the following is a physical quantity that has a magnitude but no direction?",
-                arrayOf("Vector","Frame of reference", "Resultant", "Scalar"), 3)
-        val q2_2 = Question("Multiplying or dividing vectors by scalars results in",
-                arrayOf("Vectors if multiplied or scalars if divided","Scalars if multiplied scalars", "Scalars", "Vectors"), 3)
-        val q2_3 = Question("Identify the following quantities as scalar or vector: the mass of an object, the number of leaves on a tree, wind velocity.",
-                arrayOf("Vector, scalar, scalar","Vector, scalar, vector", "Scalar, scalar, vector", "Scalar, vector, vector"), 2)
-        val q2_4 = Question("Which of the following is an example of a vector quantity?",
-                arrayOf("Temperature","Velocity", "Volume", "Mass"), 1)
+        val file = File("/sdcard/questions.json")
 
-        val q3_1 = Question("'Guardians of the Galaxy' director James Gunn confirmed via Twitter that the Orb holds which Infinity Stone?",
-                arrayOf("The space stone","The mind stone", "The power stone", "The time stone"), 2)
-        val q3_2 = Question("What line of dialogue reveals Senator Stern to be a villain in 'Captain America: The Winter Soldier'?",
-                arrayOf("Death to Shield","I am issuing a direct order to kill Captain America on sight", "Hail Hydra", "Cut one off. Two shall take its place."),
-                2)
-        val q3_3 = Question("What's Abomination's real name?", arrayOf("Brock Rumlow","Thunderbolt Ross", "Georges Batroc", "Emil Blonsky"), 3)
 
-        val Quiz1 = Quiz("Math", "Short Math Desc","Long Math Desc", mutableListOf(q1_1,q1_2,q1_3));
-        val Quiz2 = Quiz("Physics", "Short Physic Desc","Long Physic Desc", mutableListOf(q2_1,q2_2,q2_3,q2_4));
-        val Quiz3 = Quiz("Marvel", "Short Marvel Desc","Long Marvel Desc", mutableListOf(q3_1,q3_2,q3_3));
 
-        quizLibrary = mutableMapOf("Math" to Quiz1, "Physics" to Quiz2, "Marvel" to Quiz3)
+        val inputStream: InputStream = file.inputStream()
+        val inputString = inputStream.bufferedReader().use { it.readText() }
+
+        var json:JSONArray? = null
+
+
+
+        try {
+            json = JSONArray(inputString)
+        } catch (e:Exception) {
+            Log.e("QuizApp", "Unable to read quiz data.")
+        }
+
+
+        for (i in 0..(json!!.length() - 1)) {
+            val quiz:JSONObject = json.getJSONObject(i)
+
+            val questions:JSONArray = quiz.getJSONArray("questions")
+
+            var questionList:MutableList<Question>? = null
+
+            for(j in 0..(questions!!.length()-1)) {
+
+                val curr = questions.getJSONObject(j)
+
+                val text = curr.getString("text")
+                val answer = curr.getInt("answer")
+                val choices = curr.getJSONArray("answers")
+
+
+                val currQuestion = Question(text, arrayOf(choices.getString(0), choices.getString(1), choices.getString(2),
+                        choices.getString(3)), answer)
+                if(questionList == null) {
+                    questionList = mutableListOf(currQuestion)
+                } else {
+                    questionList!!.add(currQuestion)
+                }
+            }
+
+            val title = quiz.getString("title")
+            val desc = quiz.getString("desc")
+            val currQuiz = Quiz(title,desc, desc, questionList)
+
+            if(i == 0) {
+                quizLibrary = mutableMapOf(title to currQuiz)
+            } else {
+                quizLibrary.put(title, currQuiz)
+            }
+
+            Log.i("QuizApp", quiz.get("title").toString())
+        }
     }
 
     override fun getQuestion(quizName: String, index: Int): Question? {
         val temp:Quiz? = getQuiz(quizName)
 
-        if(index < temp!!.questions.size) {
-            return temp!!.questions[index]
+        if(index < temp!!.questions!!.size) {
+            return temp!!.questions!![index]
         }
         return null
     }
@@ -71,17 +112,64 @@ class QuizApp : Application(), TopicRepository {
     override fun putQuestion(quizName: String, question: Question) {
         val temp:Quiz? = getQuiz(quizName)
 
-        temp!!.questions.add(question)
+        temp!!.questions!!.add(question)
+    }
+
+    override fun getTopics(): Array<String> {
+        return quizLibrary.keys.toTypedArray()
     }
 }
 
 class Question (val question:String, val choices:Array<String>, val answer:Int)
-class Quiz (val title:String, val shortDesc:String, val longDesc:String, val questions:MutableList<Question>)
+class Quiz (val title:String, val shortDesc:String, val longDesc:String, val questions:MutableList<Question>?)
 
 interface TopicRepository {
     fun getQuiz(quizName:String) : Quiz?
     fun getQuestion(quizName:String, index:Int) : Question?
     fun putQuiz(quizName: String, quiz:Quiz)
     fun putQuestion(quizName: String, question:Question)
+    fun getTopics():Array<String>
+}
+
+
+
+internal class RetrieveQuizTask : AsyncTask<String, String, String>() {
+
+    private var exception: Exception? = null
+
+
+    override fun onPreExecute() {
+        super.onPreExecute()
+        Log.i("REPO", "PreExecute")
+    }
+
+    override fun doInBackground(vararg urls: String): String? {
+        Log.i("REPO", "CONNECTION")
+        val connection = URL("http://tednewardsandbox.site44.com/questions.json").openConnection() as HttpURLConnection
+
+        var text : String = ""
+
+        try {
+            connection.connect()
+            text = connection.inputStream.use { it.reader().use { reader -> reader.readText() } }
+        }
+        catch (e : IOException){
+            e.printStackTrace()
+        }
+        catch (e : MalformedURLException){
+            e.printStackTrace()
+        }
+        finally {
+            connection.disconnect()
+        }
+
+        Log.i("QuizApp", text)
+        return "asdf"
+    }
+
+    override fun onPostExecute(result: String?) {
+        super.onPostExecute(result)
+        Log.i("Repo", "PostExecute")
+    }
 }
 

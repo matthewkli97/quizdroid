@@ -24,7 +24,7 @@ class QuestionActivity : AppCompatActivity() {
         updateButton()
 
         val quiz = QuizApp.instance.getQuiz(intent.getStringExtra("quiz"))
-        val question:Question = quiz!!.questions[intent.getIntExtra("index", 0)]
+        val question:Question = quiz!!.questions!![intent.getIntExtra("index", 0)]
 
         val rg_answers = RadioGroup(applicationContext)
         rg_answers.orientation = RadioGroup.VERTICAL

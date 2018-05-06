@@ -40,7 +40,7 @@ class QuizActivity : AppCompatActivity() , SummaryFragment.OnFragmentInteraction
     }
 
     override fun onSummaryButtonInteraction() {
-        val question = quiz!!.questions[0]
+        val question = quiz!!.questions!![0]
         questionFragment = QuestionFragment.newInstance(question.question, question.choices[0], question.choices[1], question.choices[2], question.choices[3])
 
         val currFrag = supportFragmentManager.findFragmentByTag("SummaryFrag")
@@ -52,12 +52,12 @@ class QuizActivity : AppCompatActivity() , SummaryFragment.OnFragmentInteraction
     }
 
     override fun onQuestionButtonInteraction(selected:Int) {
-        val question = quiz!!.questions.get(current)
+        val question = quiz!!.questions!!.get(current)
         if(question.choices[selected] == question.choices[question.answer].toString()) {
             correct++
         }
 
-        answerFragment = AnswerFragment.newInstance(question.question, question.choices[question.answer].toString(), question.choices[selected], correct, quiz!!.questions.size, current + 1 >= quiz!!.questions.size)
+        answerFragment = AnswerFragment.newInstance(question.question, question.choices[question.answer - 1].toString(), question.choices[selected], correct, quiz!!.questions!!.size, current + 1 >= quiz!!.questions!!.size)
         val currFrag = supportFragmentManager.findFragmentByTag("QuestionFrag")
 
         supportFragmentManager
@@ -71,8 +71,8 @@ class QuizActivity : AppCompatActivity() , SummaryFragment.OnFragmentInteraction
         val currFrag = supportFragmentManager.findFragmentByTag("AnswerFrag")
 
         current++
-        if(current < quiz!!.questions.size) {
-            val question = quiz!!.questions[current]
+        if(current < quiz!!.questions!!.size) {
+            val question = quiz!!.questions!![current]
             questionFragment = QuestionFragment.newInstance(question.question, question.choices[0], question.choices[1], question.choices[2], question.choices[3])
 
             supportFragmentManager
