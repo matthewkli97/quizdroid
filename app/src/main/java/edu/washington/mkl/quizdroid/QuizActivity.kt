@@ -53,7 +53,7 @@ class QuizActivity : AppCompatActivity() , SummaryFragment.OnFragmentInteraction
 
     override fun onQuestionButtonInteraction(selected:Int) {
         val question = quiz!!.questions!!.get(current)
-        if(question.choices[selected] == question.choices[question.answer].toString()) {
+        if(question.choices[selected] == question.choices[question.answer-1].toString()) {
             correct++
         }
 
@@ -82,7 +82,7 @@ class QuizActivity : AppCompatActivity() , SummaryFragment.OnFragmentInteraction
                     .commit()
 
         } else {
-            val nextIntent = Intent(this, MainActivity::class.java)
+            val nextIntent = Intent(this, Main2Activity::class.java)
             startActivity(nextIntent)
         }
     }
