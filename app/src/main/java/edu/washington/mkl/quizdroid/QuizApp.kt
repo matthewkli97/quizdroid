@@ -14,8 +14,6 @@ class QuizApp : Application(), TopicRepository {
             private set
         lateinit var quizLibrary: MutableMap<String, Quiz>
             private set
-        var time = 1;
-        var url = "http://tednewardsandbox.site44.com/questions.json";
     }
 
     override fun onCreate() {

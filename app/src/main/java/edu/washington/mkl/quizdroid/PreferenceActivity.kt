@@ -6,6 +6,7 @@ import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 
@@ -24,22 +25,31 @@ class PreferenceActivity : AppCompatActivity() {
 
         val et_url = findViewById(R.id.et_url) as EditText
         val et_time = findViewById(R.id.et_time) as EditText
-        var url = "http://tednewardsandbox.site44.com/questions.json"
-        var time = 1
+
+        var url = intent.getStringExtra("url")
+        var time:Int = intent.getIntExtra("time", 1)
+
+        et_url.setText(url.toString())
+        et_time.setText(time.toString())
 
         btn_save.setOnClickListener { view ->
             val nextIntent = Intent(this, Main2Activity::class.java)
+            nextIntent.putExtra("url", url)
+            nextIntent.putExtra("time", time)
             startActivity(nextIntent)
         }
 
         btn_cancel.setOnClickListener { view ->
             val nextIntent = Intent(this, Main2Activity::class.java)
+            nextIntent.putExtra("url", url)
+            nextIntent.putExtra("time", time)
             startActivity(nextIntent)
         }
 
         et_url.addTextChangedListener(object  : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 url = s.toString()
+                Log.i("PreferenceActivity","url:" + url)
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -52,17 +62,21 @@ class PreferenceActivity : AppCompatActivity() {
 
         })
 
-        et_url.addTextChangedListener(object  : TextWatcher {
+        et_time.addTextChangedListener(object  : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                time = s.toString().toInt()
+                if(s.toString() == "") {
+                    et_time.setText("1")
+                    time = 1
+                } else {
+                    time = s.toString().toInt()
+                }
+                Log.i("PreferenceActivity","time:" + time)
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-
             }
 
         })

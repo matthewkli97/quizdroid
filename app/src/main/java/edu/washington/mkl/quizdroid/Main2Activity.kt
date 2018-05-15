@@ -1,18 +1,17 @@
 package edu.washington.mkl.quizdroid
 
 import android.Manifest
-import android.app.DownloadManager
+import android.app.AlertDialog
 import android.app.IntentService
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Build
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
-import android.support.design.widget.Snackbar
+import android.provider.Settings
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.Toolbar
@@ -22,65 +21,115 @@ import android.view.MenuItem
 import android.widget.*
 
 import kotlinx.android.synthetic.main.activity_main2.*
-import kotlinx.android.synthetic.main.fragment_summary.*
 import org.json.JSONArray
 import java.io.*
-import java.net.ConnectException
 import java.net.HttpURLConnection
-import java.net.MalformedURLException
 import java.net.URL
 
 class Main2Activity : AppCompatActivity() {
 
-
-
+    companion object {
+        var url = "http://tednewardsandbox.site44.com/questions.json"
+        var time:Int = 1
+        var downloadIntent:Intent? = null
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
 
-        val downloadIntent = Intent(this, MyService::class.java)
+        if(checkAirplaneMode()) {
+            val builder = AlertDialog.Builder(this@Main2Activity)
 
-        val mTopToolbar = findViewById(R.id.toolbar) as Toolbar;
-        setSupportActionBar(mTopToolbar);
+            // Set the alert dialog title
+            builder.setTitle("Airplane Mode")
 
-        setSupportActionBar(toolbar)
+            // Display a message on alert dialog
+            builder.setMessage("Looks like airplane mode is on, some features may not work properly. Do you want to turn airplane mode off?")
 
-        ActivityCompat.requestPermissions(this,
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                1);
+            // Set a positive button and its click listener on alert dialog
+            builder.setPositiveButton("YES"){dialog, which ->
+                val intent = Intent(android.provider.Settings.ACTION_AIRPLANE_MODE_SETTINGS)
+                startActivity(intent)
+            }
 
+            // Display a negative button on alert dialog
+            builder.setNegativeButton("No"){dialog,which ->
 
-        val intent = intent
+            }
 
-        var url = intent.getStringExtra("url")
-        val time = intent.getIntExtra("time", 1)
+            // Finally, make the alert dialog using builder
+            val dialog: AlertDialog = builder.create()
 
-        url = "http://tednewardsandbox.site44.com/questions.json"
-        downloadIntent.putExtra("url", url)
-        downloadIntent.putExtra("time", time)
+            // Display the alert dialog on app interface
+            dialog.show()
+        } else if(!checkNetworkConnection()) {
 
-        startService(downloadIntent)
+            Toast.makeText(this@Main2Activity, "No Internet Connection.", Toast.LENGTH_SHORT).show()
 
-        val lv = findViewById(R.id.list) as ListView
+        } else {
+            if (downloadIntent == null) {
+                startDownloadIntent()
+            } else {
+                updateDownloadIntent()
+            }
 
-        val quizes:Array<String> = QuizApp.instance.getTopics()
+            val mTopToolbar = findViewById(R.id.toolbar) as Toolbar;
+            setSupportActionBar(mTopToolbar);
 
-        val adapter = ArrayAdapter(this,
-                android.R.layout.simple_list_item_1, android.R.id.text1, quizes);
+            setSupportActionBar(toolbar)
 
-        lv.adapter = adapter
+            ActivityCompat.requestPermissions(this,
+                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                    1);
 
-        lv.onItemClickListener = AdapterView.OnItemClickListener { adapterView, view, position, id ->
-            // do something...
-            Log.i("My Activity", position.toString())
+            val lv = findViewById(R.id.list) as ListView
 
-            val intent = Intent(this, QuizActivity::class.java)
+            val quizes: Array<String> = QuizApp.instance.getTopics()
 
-            intent.putExtra("quizName", quizes[position])
+            val adapter = ArrayAdapter(this,
+                    android.R.layout.simple_list_item_1, android.R.id.text1, quizes);
 
-            startActivity(intent)
+            lv.adapter = adapter
+
+            lv.onItemClickListener = AdapterView.OnItemClickListener { adapterView, view, position, id ->
+                // do something...
+                Log.i("My Activity", position.toString())
+
+                val intent = Intent(this, QuizActivity::class.java)
+
+                intent.putExtra("quizName", quizes[position])
+
+                startActivity(intent)
+            }
         }
+    }
+
+    fun updateDownloadIntent() {
+        val currTime = intent.getIntExtra("time", -1)
+        val currUrl = intent.getStringExtra("url")
+
+        Log.i("MainActivity", "currTime: " + currTime)
+        Log.i("MainActivity", "currUrl: " + currUrl)
+
+        if((currUrl != null && currUrl != url) || (currTime != time && currTime != -1)) {
+            url = currUrl
+            time = currTime
+            stopDownloadIntent()
+            startDownloadIntent()
+        }
+    }
+
+    fun startDownloadIntent() {
+        downloadIntent = Intent(this, MyService::class.java)
+        downloadIntent?.putExtra("url", url)
+        downloadIntent?.putExtra("time", time)
+        startService(downloadIntent)
+    }
+
+    fun stopDownloadIntent() {
+        Log.i("Main2Activity", "Service Stopped")
+        stopService(downloadIntent)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int,
@@ -115,12 +164,25 @@ class Main2Activity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         when(item!!.itemId){
             R.id.Menu -> {
-                val intent = Intent(this, PreferenceActivity::class.java)
-                startActivity(intent)
+                val prefIntent = Intent(this, PreferenceActivity::class.java)
+                prefIntent.putExtra("url", url)
+                prefIntent.putExtra("time", time)
+                startActivity(prefIntent)
                 return true
             }
             else -> return super.onOptionsItemSelected(item)
         }
+    }
+
+    fun checkAirplaneMode(): Boolean {
+        return Settings.Global.getInt(this.contentResolver,
+                Settings.Global.AIRPLANE_MODE_ON, 0) !== 0
+    }
+
+    fun checkNetworkConnection() : Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected
     }
 }
 
@@ -129,7 +191,6 @@ class MyService : IntentService("MyService") {
 
     var stopped:Boolean
     var mHandler: Handler
-    var reference:Long = -1
 
     init {
         mHandler = Handler();
@@ -165,9 +226,9 @@ class MyService : IntentService("MyService") {
 
                 val sdcard : File = Environment.getExternalStorageDirectory()
 
-                val jsonFile : File = File(sdcard, "questions2.json")
+                val jsonFile : File = File(sdcard, "questions.json")
 
-
+                // Attempt to overwrite existing question.json file
                 try {
                     val fos : FileOutputStream = FileOutputStream(jsonFile)
                     val pw : PrintWriter = PrintWriter(fos)
@@ -177,25 +238,17 @@ class MyService : IntentService("MyService") {
                     pw.flush()
                     pw.close()
                     fos.close()
-                }
-                catch (e : FileNotFoundException){
-                    mHandler.post(DisplayToast(this, "Download Failed"))
-                    e.printStackTrace()
-                }
-                catch (e : IOException){
-                    mHandler.post(DisplayToast(this, "Download Failed"))
-                    e.printStackTrace()
+
+                    // Update Library
+                    QuizApp.instance.updateLibrary()
                 }
                 catch (e : Exception){
                     mHandler.post(DisplayToast(this, "Download Failed"))
                 }
-
-                Thread.sleep((60000 * time).toLong())
-            } catch (e: InterruptedException) {
-                Thread.currentThread().interrupt()
             } catch (e: Exception) {
-
+                mHandler.post(DisplayToast(this, "Download Failed"))
             }
+            Thread.sleep((60000 * time).toLong())
         }
     }
 
@@ -203,19 +256,6 @@ class MyService : IntentService("MyService") {
         super.onDestroy()
         stopped = true
         Log.i("MyService", "Thread Destroy")
-    }
-
-    private val downloadReceiver = object : BroadcastReceiver() {
-
-        override fun onReceive(context: Context, intent: Intent) {
-
-            //check if the broadcast message is for our Enqueued download
-            val referenceId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-
-            if (referenceId == reference) {
-
-            }
-        }
     }
 }
 
