@@ -1,9 +1,17 @@
 package edu.washington.mkl.quizdroid
 
 import android.Manifest
+import android.app.DownloadManager
+import android.app.IntentService
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
@@ -14,12 +22,24 @@ import android.view.MenuItem
 import android.widget.*
 
 import kotlinx.android.synthetic.main.activity_main2.*
+import kotlinx.android.synthetic.main.fragment_summary.*
+import org.json.JSONArray
+import java.io.*
+import java.net.ConnectException
+import java.net.HttpURLConnection
+import java.net.MalformedURLException
+import java.net.URL
 
 class Main2Activity : AppCompatActivity() {
+
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
+
+        val downloadIntent = Intent(this, MyService::class.java)
 
         val mTopToolbar = findViewById(R.id.toolbar) as Toolbar;
         setSupportActionBar(mTopToolbar);
@@ -29,6 +49,18 @@ class Main2Activity : AppCompatActivity() {
         ActivityCompat.requestPermissions(this,
                 arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
                 1);
+
+
+        val intent = intent
+
+        var url = intent.getStringExtra("url")
+        val time = intent.getIntExtra("time", 1)
+
+        url = "http://tednewardsandbox.site44.com/questions.json"
+        downloadIntent.putExtra("url", url)
+        downloadIntent.putExtra("time", time)
+
+        startService(downloadIntent)
 
         val lv = findViewById(R.id.list) as ListView
 
@@ -90,5 +122,106 @@ class Main2Activity : AppCompatActivity() {
             else -> return super.onOptionsItemSelected(item)
         }
     }
+}
 
+
+class MyService : IntentService("MyService") {
+
+    var stopped:Boolean
+    var mHandler: Handler
+    var reference:Long = -1
+
+    init {
+        mHandler = Handler();
+        stopped = false
+
+    }
+
+    override fun onHandleIntent(intent: Intent?) {
+        Log.i("MyService", "Thread Start")
+        val url = intent!!.getStringExtra("url")
+        val time = intent!!.getIntExtra("time", 1)
+
+        while(!stopped) {
+            try {
+                Log.i("Thread", "hello")
+
+                val connection = URL(url).openConnection() as HttpURLConnection
+
+                var input : String = ""
+
+                try {
+                    connection.connect()
+                    input = connection.inputStream.use { it.reader().use { reader -> reader.readText() } }
+                }
+                catch (e : IOException){
+                    mHandler.post(DisplayToast(this, "Download Failed"))
+                }
+                finally {
+                    connection.disconnect()
+                }
+
+                val jsonInput = JSONArray(input)
+
+                val sdcard : File = Environment.getExternalStorageDirectory()
+
+                val jsonFile : File = File(sdcard, "questions2.json")
+
+
+                try {
+                    val fos : FileOutputStream = FileOutputStream(jsonFile)
+                    val pw : PrintWriter = PrintWriter(fos)
+
+                    pw.print(jsonInput)
+
+                    pw.flush()
+                    pw.close()
+                    fos.close()
+                }
+                catch (e : FileNotFoundException){
+                    mHandler.post(DisplayToast(this, "Download Failed"))
+                    e.printStackTrace()
+                }
+                catch (e : IOException){
+                    mHandler.post(DisplayToast(this, "Download Failed"))
+                    e.printStackTrace()
+                }
+                catch (e : Exception){
+                    mHandler.post(DisplayToast(this, "Download Failed"))
+                }
+
+                Thread.sleep((60000 * time).toLong())
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+            } catch (e: Exception) {
+
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopped = true
+        Log.i("MyService", "Thread Destroy")
+    }
+
+    private val downloadReceiver = object : BroadcastReceiver() {
+
+        override fun onReceive(context: Context, intent: Intent) {
+
+            //check if the broadcast message is for our Enqueued download
+            val referenceId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+
+            if (referenceId == reference) {
+
+            }
+        }
+    }
+}
+
+class DisplayToast(private val mContext: Context, internal var mText: String) : Runnable {
+
+    override fun run() {
+        Toast.makeText(mContext, mText, Toast.LENGTH_SHORT).show()
+    }
 }

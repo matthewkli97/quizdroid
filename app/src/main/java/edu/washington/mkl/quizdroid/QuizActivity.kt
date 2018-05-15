@@ -15,7 +15,6 @@ class QuizActivity : AppCompatActivity() , SummaryFragment.OnFragmentInteraction
     var summaryFragment:SummaryFragment? = null
     var questionFragment:QuestionFragment? = null
     var answerFragment:AnswerFragment? = null
-    var currFragment:Fragment? = null
     var quiz:Quiz? = null;
     var correct = 0
     var current = 0
@@ -80,7 +79,6 @@ class QuizActivity : AppCompatActivity() , SummaryFragment.OnFragmentInteraction
                     .remove(currFrag)
                     .add(R.id.root_layout, questionFragment, "QuestionFrag")
                     .commit()
-
         } else {
             val nextIntent = Intent(this, Main2Activity::class.java)
             startActivity(nextIntent)

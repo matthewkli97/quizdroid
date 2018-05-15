@@ -2,16 +2,10 @@ package edu.washington.mkl.quizdroid
 
 import android.app.Application
 import android.util.Log
-import java.net.HttpURLConnection
-import java.net.URL
-import android.os.AsyncTask
 import android.os.Environment
 import java.io.*
-import java.net.MalformedURLException
-import android.os.Environment.getExternalStorageDirectory
 import org.json.JSONArray
 import org.json.JSONObject
-
 
 class QuizApp : Application(), TopicRepository {
 
@@ -20,6 +14,8 @@ class QuizApp : Application(), TopicRepository {
             private set
         lateinit var quizLibrary: MutableMap<String, Quiz>
             private set
+        var time = 1;
+        var url = "http://tednewardsandbox.site44.com/questions.json";
     }
 
     override fun onCreate() {
@@ -27,26 +23,31 @@ class QuizApp : Application(), TopicRepository {
 
         instance = this
 
+        quizLibrary = readLibrary()
+    }
+
+    fun updateLibrary() {
+        quizLibrary = readLibrary()
+    }
+
+    fun readLibrary():MutableMap<String, Quiz> {
+
+        var updatedLibrary: MutableMap<String, Quiz> = mutableMapOf()
 
         val sdcard = Environment.getExternalStorageDirectory()
 
-        val file = File("/sdcard/questions.json")
-
-
+        val file = File(sdcard,"questions.json")
 
         val inputStream: InputStream = file.inputStream()
         val inputString = inputStream.bufferedReader().use { it.readText() }
 
         var json:JSONArray? = null
 
-
-
         try {
             json = JSONArray(inputString)
         } catch (e:Exception) {
             Log.e("QuizApp", "Unable to read quiz data.")
         }
-
 
         for (i in 0..(json!!.length() - 1)) {
             val quiz:JSONObject = json.getJSONObject(i)
@@ -78,13 +79,15 @@ class QuizApp : Application(), TopicRepository {
             val currQuiz = Quiz(title,desc, desc, questionList)
 
             if(i == 0) {
-                quizLibrary = mutableMapOf(title to currQuiz)
+                updatedLibrary = mutableMapOf(title to currQuiz)
             } else {
-                quizLibrary.put(title, currQuiz)
+                updatedLibrary.put(title, currQuiz)
             }
 
             Log.i("QuizApp", quiz.get("title").toString())
         }
+
+        return updatedLibrary
     }
 
     override fun getQuestion(quizName: String, index: Int): Question? {
@@ -132,44 +135,4 @@ interface TopicRepository {
 }
 
 
-
-internal class RetrieveQuizTask : AsyncTask<String, String, String>() {
-
-    private var exception: Exception? = null
-
-
-    override fun onPreExecute() {
-        super.onPreExecute()
-        Log.i("REPO", "PreExecute")
-    }
-
-    override fun doInBackground(vararg urls: String): String? {
-        Log.i("REPO", "CONNECTION")
-        val connection = URL("http://tednewardsandbox.site44.com/questions.json").openConnection() as HttpURLConnection
-
-        var text : String = ""
-
-        try {
-            connection.connect()
-            text = connection.inputStream.use { it.reader().use { reader -> reader.readText() } }
-        }
-        catch (e : IOException){
-            e.printStackTrace()
-        }
-        catch (e : MalformedURLException){
-            e.printStackTrace()
-        }
-        finally {
-            connection.disconnect()
-        }
-
-        Log.i("QuizApp", text)
-        return "asdf"
-    }
-
-    override fun onPostExecute(result: String?) {
-        super.onPostExecute(result)
-        Log.i("Repo", "PostExecute")
-    }
-}
 
